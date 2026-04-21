@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Executive News Monitor
@@ -157,15 +156,18 @@ def load_companies(csv_path: str) -> list[dict]:
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            company = row.get("company", "").strip()
-            executives = row.get("executives", "").strip()
-            industry = row.get("industry", "").strip()
-            if company:
-                companies.append({
-                    "company": company,
-                    "executives": [e.strip() for e in executives.split("|") if e.strip()],
-                    "industry": industry,
-                })
+            try:
+                company = (row.get("company") or "").strip()
+                executives = (row.get("executives") or "").strip()
+                industry = (row.get("industry") or "").strip()
+                if company:
+                    companies.append({
+                        "company": company,
+                        "executives": [e.strip() for e in executives.split("|") if e.strip()],
+                        "industry": industry,
+                    })
+            except Exception as e:
+                print(f"  ⚠️  Skipping bad row in CSV: {row} — {e}", file=sys.stderr)
     return companies
 
 # ─────────────────────────────────────────────
