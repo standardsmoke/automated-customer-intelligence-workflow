@@ -30,7 +30,7 @@ from html.parser import HTMLParser
 # ─────────────────────────────────────────────
 
 COMPANIES_CSV = os.path.join(os.path.dirname(__file__), "..", "companies.csv")
-MAX_ARTICLES_PER_COMPANY = 5   # max articles shown per company
+MAX_ARTICLES_PER_COMPANY = 3   # max articles shown per company
 MAX_TOTAL_ARTICLES = 40        # hard cap on total articles
 
 # Priority keywords → score boost
@@ -221,10 +221,13 @@ def build_email_html(company_results: list[dict], run_date: str) -> str:
           {top_rows}
         </table>"""
 
+    # URLs already shown in top priority — don't repeat them below
+    top_urls = {a["url"] for a in top_articles}
+
     # ── Per-Company Sections ──
     company_sections = ""
     for r in company_results:
-        articles = r["articles"]
+        articles = [a for a in r["articles"] if a["url"] not in top_urls]
         if not articles:
             continue
 
