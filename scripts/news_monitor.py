@@ -157,6 +157,8 @@ def load_companies(csv_path: str) -> list[dict]:
         reader = csv.DictReader(f)
         for row in reader:
             try:
+                if not any(v for v in row.values() if v):  # skip blank rows
+                    continue
                 company = (row.get("company") or "").strip()
                 executives = (row.get("executives") or "").strip()
                 industry = (row.get("industry") or "").strip()
