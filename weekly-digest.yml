@@ -1,0 +1,31 @@
+name: Weekly Executive News Digest
+
+on:
+  # Every Monday at 7:30 AM PST = 15:30 UTC
+  schedule:
+    - cron: "30 15 * * 1"
+
+  # Allow manual trigger from the Actions tab (great for testing)
+  workflow_dispatch:
+
+jobs:
+  send-digest:
+    name: Scrape News & Send Email
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run news monitor
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS }}
+        run: python scripts/news_monitor.py
