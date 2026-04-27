@@ -65,6 +65,35 @@ PRIORITY_LABELS = {
 # HELPERS
 # ─────────────────────────────────────────────
 
+def parse_pub_date(date_str: str):
+    """Parse RSS pubDate string into a UTC datetime, return None if unparseable."""
+    if not date_str:
+        return None
+    # RSS dates are typically: "Mon, 21 Apr 2026 15:30:00 GMT"
+    formats = [
+        "%a, %d %b %Y %H:%M:%S %Z",
+        "%a, %d %b %Y %H:%M:%S %z",
+        "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%dT%H:%M:%S%z",
+    ]
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str.strip(), fmt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except ValueError:
+            continue
+    return None
+
+def is_within_days(date_str: str, days: int = 7) -> bool:
+    """Return True if the article was published within the last N days."""
+    dt = parse_pub_date(date_str)
+    if dt is None:
+        return True  # if we can't parse the date, include it to be safe
+    cutoff = datetime.now(timezone.utc) - __import__('datetime').timedelta(days=days)
+    return dt >= cutoff
+
 class MLStripper(HTMLParser):
     """Strip HTML tags from a string."""
     def __init__(self):
@@ -396,6 +425,9 @@ def main():
             articles = fetch_google_news(q)
             print(f"   '{q}' → {len(articles)} articles")
             all_articles.extend(articles)
+
+        # Filter to last 7 days
+        all_articles = [a for a in all_articles if is_within_days(a["published"], days=7)]
 
         # Deduplicate and sort by score
         unique = deduplicate(all_articles)
